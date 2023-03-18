@@ -181,35 +181,26 @@ public class Game1 : Game {
             return;
         }
 
-        // im so sorry
-        if (_isKeyDown && Keyboard.GetState().GetPressedKeys().Length == 0 && !Input.GetButton(1, Input.ArcadeButtons.A1) && !Input.GetButton(1, Input.ArcadeButtons.A2) && !Input.GetButton(1, Input.ArcadeButtons.A3) && !Input.GetButton(1, Input.ArcadeButtons.A4) && !Input.GetButton(1, Input.ArcadeButtons.B1) && !Input.GetButton(1, Input.ArcadeButtons.B2) && !Input.GetButton(1, Input.ArcadeButtons.B3) && !Input.GetButton(1, Input.ArcadeButtons.B4) && !Input.GetButton(1, Input.ArcadeButtons.StickUp) && !Input.GetButton(1, Input.ArcadeButtons.StickDown) && !Input.GetButton(1, Input.ArcadeButtons.StickLeft) && !Input.GetButton(1, Input.ArcadeButtons.StickRight)&& !Input.GetButton(2, Input.ArcadeButtons.A1) && !Input.GetButton(2, Input.ArcadeButtons.A2) && !Input.GetButton(2, Input.ArcadeButtons.A3) && !Input.GetButton(2, Input.ArcadeButtons.A4) && !Input.GetButton(2, Input.ArcadeButtons.B1) && !Input.GetButton(2, Input.ArcadeButtons.B2) && !Input.GetButton(2, Input.ArcadeButtons.B3) && !Input.GetButton(2, Input.ArcadeButtons.B4) && !Input.GetButton(2, Input.ArcadeButtons.StickUp) && !Input.GetButton(2, Input.ArcadeButtons.StickDown) && !Input.GetButton(2, Input.ArcadeButtons.StickLeft) && !Input.GetButton(2, Input.ArcadeButtons.StickRight)) {
-            _isKeyDown = false;
-        }
-
         if (!_isKeyDown && _waitingForPromotion &&
             (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A3) || Keyboard.GetState().IsKeyDown(Keys.I))) {
-            _isKeyDown = true;
             ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? _wPromotionOptions : _bPromotionOptions;
             _game.Game[_promotionIndex] = options[(Array.IndexOf(options, _game.Game[_promotionIndex]) + 3) % 4];
         }
         
         if (!_isKeyDown && _waitingForPromotion &&
             (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A4) || Keyboard.GetState().IsKeyDown(Keys.O))) {
-            _isKeyDown = true;
             ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? _wPromotionOptions : _bPromotionOptions;
             _game.Game[_promotionIndex] = options[(Array.IndexOf(options, _game.Game[_promotionIndex]) + 1) % 4];
         }
         
         if (!_isKeyDown && _waitingForPromotion &&
             (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A1) || Keyboard.GetState().IsKeyDown(Keys.P))) {
-            _isKeyDown = true;
             _waitingForPromotion = false;
             _game.CurrentPlayer = _game.CurrentPlayer == ChessColor.White ? ChessColor.Black : ChessColor.White;
         }
 
-        if ((!_isKeyDown && !_waitingForPromotion && Keyboard.GetState().IsKeyDown(Keys.Enter)) ||
-            Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A1)) {
-            _isKeyDown = true;
+        if (!_isKeyDown && !_waitingForPromotion && (Keyboard.GetState().IsKeyDown(Keys.Enter) ||
+            Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A1))) {
             if (_selectedFile == -1 || _selectedRank == -1) {
                 _selectedFile = _curHoveredFile;
                 _selectedRank = _curHoveredRank;
@@ -258,18 +249,15 @@ public class Game1 : Game {
 
         if (!_isKeyDown && !_waitingForPromotion &&
             (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.A : Keys.Left) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickLeft) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B1))) {
-            _isKeyDown = true;
             _curHoveredFile = (sbyte)Math.Max(0, _curHoveredFile - 1);
         }
 
         if (!_isKeyDown && !_waitingForPromotion &&
             (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.D : Keys.Right) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickRight) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B4))) {
-            _isKeyDown = true;
             _curHoveredFile = (sbyte)Math.Min(7, _curHoveredFile + 1);
         }
 
         if (!_isKeyDown && !_waitingForPromotion && (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.W : Keys.Up) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickUp) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B3))) {
-            _isKeyDown = true;
             _curHoveredRank = _game.CurrentPlayer == ChessColor.White
                 ? (sbyte)Math.Min(7, _curHoveredRank + 1)
                 : (sbyte)Math.Max(0, _curHoveredRank - 1);
@@ -277,10 +265,16 @@ public class Game1 : Game {
 
         if (!_isKeyDown && !_waitingForPromotion &&
             (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.S : Keys.Down) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickDown) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B2))) {
-            _isKeyDown = true;
             _curHoveredRank = _game.CurrentPlayer == ChessColor.White
                 ? (sbyte)Math.Max(0, _curHoveredRank - 1)
                 : (sbyte)Math.Min(7, _curHoveredRank + 1);
+        }
+
+        // im so sorry
+        if (Keyboard.GetState().GetPressedKeys().Length == 0 && !Input.GetButton(1, Input.ArcadeButtons.A1) && !Input.GetButton(1, Input.ArcadeButtons.A2) && !Input.GetButton(1, Input.ArcadeButtons.A3) && !Input.GetButton(1, Input.ArcadeButtons.A4) && !Input.GetButton(1, Input.ArcadeButtons.B1) && !Input.GetButton(1, Input.ArcadeButtons.B2) && !Input.GetButton(1, Input.ArcadeButtons.B3) && !Input.GetButton(1, Input.ArcadeButtons.B4) && !Input.GetButton(1, Input.ArcadeButtons.StickUp) && !Input.GetButton(1, Input.ArcadeButtons.StickDown) && !Input.GetButton(1, Input.ArcadeButtons.StickLeft) && !Input.GetButton(1, Input.ArcadeButtons.StickRight)&& !Input.GetButton(2, Input.ArcadeButtons.A1) && !Input.GetButton(2, Input.ArcadeButtons.A2) && !Input.GetButton(2, Input.ArcadeButtons.A3) && !Input.GetButton(2, Input.ArcadeButtons.A4) && !Input.GetButton(2, Input.ArcadeButtons.B1) && !Input.GetButton(2, Input.ArcadeButtons.B2) && !Input.GetButton(2, Input.ArcadeButtons.B3) && !Input.GetButton(2, Input.ArcadeButtons.B4) && !Input.GetButton(2, Input.ArcadeButtons.StickUp) && !Input.GetButton(2, Input.ArcadeButtons.StickDown) && !Input.GetButton(2, Input.ArcadeButtons.StickLeft) && !Input.GetButton(2, Input.ArcadeButtons.StickRight)) {
+            _isKeyDown = false;
+        } else {
+            _isKeyDown = true;
         }
 
         base.Update(gameTime);
@@ -298,13 +292,6 @@ public class Game1 : Game {
         int selIndex;
         int index;
         if (_game.CurrentPlayer == ChessColor.Black) {
-            selIndex = 8 * _selectedRank + _selectedFile;
-            _spriteBatch.Draw(hovered_square, new Vector2(selIndex % 8 * _squareSize, selIndex / 8 * _squareSize), null,
-                Color.Gray, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 0 ? light_square : dark_square,
-                new Vector2(selIndex % 8 * _squareSize,
-                    _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize), null, Color.White,
-                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
             index = 8 * _curHoveredRank + _curHoveredFile;
             _spriteBatch.Draw(hovered_square, new Vector2(index % 8 * _squareSize, index / 8 * _squareSize), null,
                 Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
@@ -312,15 +299,14 @@ public class Game1 : Game {
                 new Vector2(index % 8 * _squareSize,
                     _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize), null, Color.White,
                 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-        } else {
             selIndex = 8 * _selectedRank + _selectedFile;
-            _spriteBatch.Draw(hovered_square,
-                new Vector2(selIndex % 8 * _squareSize,
-                    _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize), null, Color.Gray,
-                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(hovered_square, new Vector2(selIndex % 8 * _squareSize, selIndex / 8 * _squareSize), null,
+                Color.Gray, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
             _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 0 ? light_square : dark_square,
-                new Vector2(selIndex % 8 * _squareSize, selIndex / 8 * _squareSize), null,
-                Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                new Vector2(selIndex % 8 * _squareSize,
+                    _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize), null, Color.White,
+                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+        } else {
             index = 8 * _curHoveredRank + _curHoveredFile;
             _spriteBatch.Draw(hovered_square,
                 new Vector2(index % 8 * _squareSize,
@@ -328,6 +314,14 @@ public class Game1 : Game {
                 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
             _spriteBatch.Draw((index / 8 + index % 8) % 2 == 0 ? light_square : dark_square,
                 new Vector2(index % 8 * _squareSize, index / 8 * _squareSize), null,
+                Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            selIndex = 8 * _selectedRank + _selectedFile;
+            _spriteBatch.Draw(hovered_square,
+                new Vector2(selIndex % 8 * _squareSize,
+                    _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize), null, Color.Gray,
+                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 0 ? light_square : dark_square,
+                new Vector2(selIndex % 8 * _squareSize, selIndex / 8 * _squareSize), null,
                 Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
         }
 

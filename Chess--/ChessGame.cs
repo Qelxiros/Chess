@@ -420,6 +420,9 @@ public class ChessGame {
 
         board[destIndex] = board[startIndex];
         board[startIndex] = ChessPiece.Empty;
+        if (result) {
+            board[destIndex] = _currentPlayer == ChessColor.Black ? ChessPiece.q : ChessPiece.Q;
+        }
         if (!isHypothetical && board[destIndex] == ChessPiece.k) {
             _bkCastlingRights = false;
             _bqCastlingRights = false;

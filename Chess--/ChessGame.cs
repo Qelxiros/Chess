@@ -87,7 +87,7 @@ public class ChessGame {
     }
 
     public bool IsPlayerInCheck(ChessColor player, ChessPiece[] board) {
-        int k = Array.IndexOf(_game, player == ChessColor.White ? ChessPiece.K : ChessPiece.k);
+        int k = Array.IndexOf(board, player == ChessColor.White ? ChessPiece.K : ChessPiece.k);
         for (int i = 0; i < 64; i++) {
             if (((char.IsUpper(board[i].ToString(), 0) && player == ChessColor.Black) ||
                  (char.IsLower(board[i].ToString(), 0) && player == ChessColor.White)) && ValidateMove(
@@ -209,7 +209,7 @@ public class ChessGame {
 
                 break;
             case ChessPiece.K:
-                if (Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 4 || Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 1.5 && move.ERank - move.SRank != 0) {
+                if (Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 4 || Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 2.5 && move.ERank - move.SRank != 0) {
                     return false;
                 }
 
@@ -243,7 +243,7 @@ public class ChessGame {
 
                 break;
             case ChessPiece.k:
-                if (Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 4 || Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 1.5 && move.ERank - move.SRank != 0) {
+                if (Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 4 || Math.Pow(move.EFile - move.SFile, 2) + Math.Pow(move.ERank - move.SRank, 2) > 2.5 && move.ERank - move.SRank != 0) {
                     return false;
                 }
 

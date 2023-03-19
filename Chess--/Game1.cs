@@ -260,12 +260,12 @@ public class Game1 : Game {
         }
 
         if (!_isKeyDown && !_waitingForPromotion &&
-            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.A : Keys.Left) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickLeft) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B1))) {
+            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.A : Keys.Right) || (_game.CurrentPlayer == ChessColor.White ? Input.GetButton(1, Input.ArcadeButtons.StickLeft) || Input.GetButton(1, Input.ArcadeButtons.B1) : Input.GetButton(2, Input.ArcadeButtons.StickRight) || Input.GetButton(2, Input.ArcadeButtons.B4)))) {
             _curHoveredFile = (sbyte)Math.Max(0, _curHoveredFile - 1);
         }
 
         if (!_isKeyDown && !_waitingForPromotion &&
-            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.D : Keys.Right) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickRight) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B4))) {
+            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.D : Keys.Left) || (_game.CurrentPlayer == ChessColor.White ? Input.GetButton(1, Input.ArcadeButtons.StickRight) || Input.GetButton(1, Input.ArcadeButtons.B4) : Input.GetButton(2, Input.ArcadeButtons.StickLeft) || Input.GetButton(2, Input.ArcadeButtons.B1)))) {
             _curHoveredFile = (sbyte)Math.Min(7, _curHoveredFile + 1);
         }
 
@@ -301,46 +301,40 @@ public class Game1 : Game {
 
         _spriteBatch.Begin();
         // TODO: Add your drawing code here
-        int selIndex;
-        int index;
+        int index = 8 * _curHoveredRank + _curHoveredFile;
+        int selIndex = 8 * _selectedRank + _selectedFile;
+        Vector2 position;
+        Vector2 oppPos;
+        Vector2 selPos;
+        Vector2 selOppPos;
         if (_game.CurrentPlayer == ChessColor.Black) {
-            index = 8 * _curHoveredRank + _curHoveredFile;
-            _spriteBatch.Draw(hovered_square, new Vector2(index % 8 * _squareSize, index / 8 * _squareSize), null,
-                Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            _spriteBatch.Draw((index / 8 + index % 8) % 2 == 0 ? light_square : dark_square,
-                new Vector2(index % 8 * _squareSize,
-                    _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize), null, Color.White,
-                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            selIndex = 8 * _selectedRank + _selectedFile;
-            _spriteBatch.Draw(hovered_square, new Vector2(selIndex % 8 * _squareSize, selIndex / 8 * _squareSize), null,
-                Color.Gray, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 0 ? light_square : dark_square,
-                new Vector2(selIndex % 8 * _squareSize,
-                    _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize), null, Color.White,
-                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            position = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - index % 8 * _squareSize, index / 8 * _squareSize);
+            oppPos = new Vector2(index % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize);
+            selPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - selIndex % 8 * _squareSize, selIndex / 8 * _squareSize);
+            selOppPos = new Vector2(selIndex % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize);
         } else {
-            index = 8 * _curHoveredRank + _curHoveredFile;
-            _spriteBatch.Draw(hovered_square,
-                new Vector2(index % 8 * _squareSize,
-                    _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize), null, Color.White,
-                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            _spriteBatch.Draw((index / 8 + index % 8) % 2 == 0 ? light_square : dark_square,
-                new Vector2(index % 8 * _squareSize, index / 8 * _squareSize), null,
-                Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            selIndex = 8 * _selectedRank + _selectedFile;
-            _spriteBatch.Draw(hovered_square,
-                new Vector2(selIndex % 8 * _squareSize,
-                    _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize), null, Color.Gray,
-                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-            _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 0 ? light_square : dark_square,
-                new Vector2(selIndex % 8 * _squareSize, selIndex / 8 * _squareSize), null,
-                Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            position = new Vector2(index % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize);
+            oppPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - index % 8 * _squareSize, index / 8 * _squareSize);
+            selPos = new Vector2(selIndex % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize);
+            selOppPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - selIndex % 8 * _squareSize, selIndex / 8 * _squareSize);
         }
+        
+        _spriteBatch.Draw(hovered_square, position, null,
+            Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+        _spriteBatch.Draw((index / 8 + index % 8) % 2 == 1 ? light_square : dark_square,
+            oppPos, null, Color.White,
+            0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+        
+        _spriteBatch.Draw(hovered_square, selPos, null,
+            Color.Gray, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+        _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 1 ? light_square : dark_square,
+            selOppPos, null, Color.White,
+            0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
 
         for (int i = 0; i < 64; i++) {
             if (i != index && i != selIndex) {
-                if ((i / 8 + i % 8) % 2 == 0) {
-                    _spriteBatch.Draw(light_square, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null,
+                if ((i / 8 + i % 8) % 2 == 1) {
+                    _spriteBatch.Draw(light_square, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null,
                         Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                     _spriteBatch.Draw(light_square,
                         new Vector2(i % 8 * _squareSize,
@@ -348,7 +342,7 @@ public class Game1 : Game {
                         0,
                         new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                 } else {
-                    _spriteBatch.Draw(dark_square, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null,
+                    _spriteBatch.Draw(dark_square, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null,
                         Color.White,
                         0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                     _spriteBatch.Draw(dark_square,
@@ -360,103 +354,53 @@ public class Game1 : Game {
             }
 
 
+            Texture2D piece = null;
             switch (_game.Game[i]) {
                 case ChessPiece.b:
-                    _spriteBatch.Draw(b, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(b,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = b;
                     break;
                 case ChessPiece.B:
-                    _spriteBatch.Draw(B, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(B,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = B;
                     break;
                 case ChessPiece.k:
-                    _spriteBatch.Draw(k, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(k,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = k;
                     break;
                 case ChessPiece.K:
-                    _spriteBatch.Draw(K, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(K,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = K;
                     break;
                 case ChessPiece.n:
-                    _spriteBatch.Draw(n, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(n,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = n;
                     break;
                 case ChessPiece.N:
-                    _spriteBatch.Draw(N, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(N,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = N;
                     break;
                 case ChessPiece.q:
-                    _spriteBatch.Draw(q, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(q,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = q;
                     break;
                 case ChessPiece.Q:
-                    _spriteBatch.Draw(Q, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(Q,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = Q;
                     break;
                 case ChessPiece.r:
-                    _spriteBatch.Draw(r, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(r,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = r;
                     break;
                 case ChessPiece.R:
-                    _spriteBatch.Draw(R, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(R,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = R;
                     break;
                 case ChessPiece.p:
-                    _spriteBatch.Draw(p0, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(p0,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = p0;
                     break;
                 case ChessPiece.P:
-                    _spriteBatch.Draw(P0, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    _spriteBatch.Draw(P0,
-                        new Vector2(i % 8 * _squareSize,
-                            _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
-                        0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    piece = P0;
                     break;
+            }
+
+            if (piece != null) {
+                _spriteBatch.Draw(piece, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
+                    new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                _spriteBatch.Draw(piece,
+                    new Vector2(i % 8 * _squareSize,
+                        _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
+                    0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
             }
         }
 
@@ -484,7 +428,7 @@ public class Game1 : Game {
         foreach (int i in _legalMovesCache) {
             switch (_game.CurrentPlayer) {
                 case ChessColor.Black:
-                    _spriteBatch.Draw(_legalMoveIndicator, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
+                    _spriteBatch.Draw(_legalMoveIndicator, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
                         new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                     break;
                 case ChessColor.White:

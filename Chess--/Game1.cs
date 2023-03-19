@@ -210,7 +210,7 @@ public class Game1 : Game {
                 _selectedRank = _curHoveredRank;
                 for (int i = 0; i < 64; i++) {
                     if (_game.ValidateMove(new ChessMove(_selectedFile, _selectedRank, (sbyte)(i % 8), (sbyte)(i / 8)),
-                            _game.CurrentPlayer, _game.Game, true)) {
+                            _game.CurrentPlayer, _game.Game, false)) {
                         _legalMovesCache.Add(i);
                     }
                 }

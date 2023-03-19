@@ -345,8 +345,8 @@ public class ChessGame {
                     return false;
                 }
 
-                if (move.SFile - move.EFile != 0 && game[8 * move.ERank + move.EFile] == ChessPiece.Empty &&
-                    !_lastMove.Equals(new ChessMove(move.EFile, 6, move.EFile, 4))) {
+                if (move.SFile - move.EFile != 0 && game[8 * move.ERank + move.EFile] == ChessPiece.Empty && (_lastMove == null ||
+                    !_lastMove.Equals(new ChessMove(move.EFile, 1, move.EFile, 5)) || move.ERank != 2 || move.SRank != 4)) {
                     return false;
                 }
 
@@ -364,8 +364,8 @@ public class ChessGame {
                     return false;
                 }
 
-                if (move.SFile - move.EFile != 0 && game[8 * move.ERank + move.EFile] == ChessPiece.Empty &&
-                    !_lastMove.Equals(new ChessMove(move.EFile, 1, move.EFile, 3))) {
+                if (move.SFile - move.EFile != 0 && game[8 * move.ERank + move.EFile] == ChessPiece.Empty && (_lastMove == null ||
+                    !_lastMove.Equals(new ChessMove(move.EFile, 1, move.EFile, 3)) || move.ERank != 2 || move.SRank != 3)) {
                     return false;
                 }
 

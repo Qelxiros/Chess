@@ -48,6 +48,8 @@ public class Game1 : Game {
     private int _fiftyMoveRuleCounter; // half-moves since last capture or pawn move
     private HashSet<ChessGame> _threefoldRepetitionCounterPartOne;
     private HashSet<ChessGame> _threefoldRepetitionCounterPartTwo;
+    private List<int> _legalMovesCache;
+    private Texture2D _legalMoveIndicator;
 
     private static readonly ChessPiece[] _wPromotionOptions =
         { ChessPiece.Q, ChessPiece.B, ChessPiece.R, ChessPiece.N };
@@ -103,6 +105,7 @@ public class Game1 : Game {
         _game.CurrentPlayer = ChessColor.White;
         _threefoldRepetitionCounterPartOne.Add(_game.DeepCopy());
         _game.CurrentPlayer = ChessColor.Black;
+        _legalMovesCache = new List<int>();
 
         base.Initialize();
     }
@@ -140,6 +143,7 @@ public class Game1 : Game {
         draw = Content.Load<Texture2D>("draw");
         info = Content.Load<Texture2D>("info");
         glhf = Content.Load<Texture2D>("glhf");
+        _legalMoveIndicator = Content.Load<Texture2D>("legal_move");
 
         Color[] data = new Color[135 * 135];
         for (int i = 0; i < 135 * 135; i++) {
@@ -204,9 +208,16 @@ public class Game1 : Game {
             if (_selectedFile == -1 || _selectedRank == -1) {
                 _selectedFile = _curHoveredFile;
                 _selectedRank = _curHoveredRank;
+                for (int i = 0; i < 64; i++) {
+                    if (_game.ValidateMove(new ChessMove(_selectedFile, _selectedRank, (sbyte)(i % 8), (sbyte)(i / 8)),
+                            _game.CurrentPlayer, _game.Game, true)) {
+                        _legalMovesCache.Add(i);
+                    }
+                }
             } else if (_selectedFile != _curHoveredFile || _selectedRank != _curHoveredRank) {
                 ChessMove move = new(_selectedFile, _selectedRank, _curHoveredFile, _curHoveredRank);
                 if (_game.ValidateMove(move, _game.CurrentPlayer, _game.Game, false)) {
+                    _legalMovesCache = new List<int>();
                     if (_game.Game[8 * move.ERank + move.EFile] != ChessPiece.Empty || _game.Game[8*move.SRank+move.SFile] == ChessPiece.p || _game.Game[8*move.SRank+move.SFile] == ChessPiece.P) {
                         _fiftyMoveRuleCounter = 0;
                         _threefoldRepetitionCounterPartOne = new HashSet<ChessGame>();
@@ -242,6 +253,7 @@ public class Game1 : Game {
                         : 3;
                 }
             } else {
+                _legalMovesCache = new List<int>();
                 _selectedFile = -1;
                 _selectedRank = -1;
             }
@@ -467,6 +479,21 @@ public class Game1 : Game {
                 _spriteBatch.Draw(draw, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White, 0,
                     new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                 break;
+        }
+
+        foreach (int i in _legalMovesCache) {
+            switch (_game.CurrentPlayer) {
+                case ChessColor.Black:
+                    _spriteBatch.Draw(_legalMoveIndicator, new Vector2(i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
+                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    break;
+                case ChessColor.White:
+                    _spriteBatch.Draw(_legalMoveIndicator,
+                    new Vector2(i % 8 * _squareSize,
+                        _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
+                    0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                    break;
+            }
         }
 
         _spriteBatch.End();

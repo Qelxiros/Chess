@@ -221,7 +221,7 @@ public class ChessGame {
                     if (!_wkCastlingRights) {
                         return false;
                     }
-                    for (int i = 5; i < 7; i++) {
+                    for (int i = 4; i < 7; i++) {
                         if (game[i] != ChessPiece.Empty ||
                             IsSquareInCheck((sbyte)(i / 8), (sbyte)(i % 8), ChessColor.Black)) {
                             return false;
@@ -233,7 +233,7 @@ public class ChessGame {
                     if (!_wqCastlingRights) {
                         return false;
                     }
-                    for (int i = 2; i < 4; i++) {
+                    for (int i = 2; i <= 4; i++) {
                         if (game[i] != ChessPiece.Empty ||
                             IsSquareInCheck((sbyte)(i / 8), (sbyte)(i % 8), ChessColor.Black)) {
                             return false;

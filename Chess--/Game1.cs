@@ -51,9 +51,9 @@ public class Game1 : Game {
     private List<int> _legalMovesCache;
     private Texture2D _legalMoveIndicator;
 
-    private static readonly ChessPiece[] _wPromotionOptions =
+    private static readonly ChessPiece[] WPromotionOptions =
         { ChessPiece.Q, ChessPiece.B, ChessPiece.R, ChessPiece.N };
-    private static readonly ChessPiece[] _bPromotionOptions =
+    private static readonly ChessPiece[] BPromotionOptions =
         { ChessPiece.q, ChessPiece.b, ChessPiece.r, ChessPiece.n };
 
     /// <summary>
@@ -187,13 +187,13 @@ public class Game1 : Game {
 
         if (!_isKeyDown && _waitingForPromotion &&
             (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A3) || Keyboard.GetState().IsKeyDown(Keys.I))) {
-            ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? _wPromotionOptions : _bPromotionOptions;
+            ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? WPromotionOptions : BPromotionOptions;
             _game.Game[_promotionIndex] = options[(Array.IndexOf(options, _game.Game[_promotionIndex]) + 3) % 4];
         }
         
         if (!_isKeyDown && _waitingForPromotion &&
             (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A4) || Keyboard.GetState().IsKeyDown(Keys.O))) {
-            ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? _wPromotionOptions : _bPromotionOptions;
+            ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? WPromotionOptions : BPromotionOptions;
             _game.Game[_promotionIndex] = options[(Array.IndexOf(options, _game.Game[_promotionIndex]) + 1) % 4];
         }
         

@@ -218,10 +218,10 @@ public class ChessGame {
                 }
 
                 if (move.EFile - move.SFile == 2) {
-                    if (!_wkCastlingRights) {
+                    if (!_wkCastlingRights || IsSquareInCheck(0,4,ChessColor.Black)) {
                         return false;
                     }
-                    for (int i = 4; i < 7; i++) {
+                    for (int i = 5; i < 7; i++) {
                         if (game[i] != ChessPiece.Empty ||
                             IsSquareInCheck((sbyte)(i / 8), (sbyte)(i % 8), ChessColor.Black)) {
                             return false;
@@ -230,10 +230,10 @@ public class ChessGame {
                 }
 
                 if (move.EFile - move.SFile == -2) {
-                    if (!_wqCastlingRights) {
+                    if (!_wqCastlingRights || IsSquareInCheck(0,4,ChessColor.Black)) {
                         return false;
                     }
-                    for (int i = 2; i <= 4; i++) {
+                    for (int i = 2; i < 4; i++) {
                         if (game[i] != ChessPiece.Empty ||
                             IsSquareInCheck((sbyte)(i / 8), (sbyte)(i % 8), ChessColor.Black)) {
                             return false;
@@ -252,7 +252,7 @@ public class ChessGame {
                 }
 
                 if (move.EFile - move.SFile == 2) {
-                    if (!_bkCastlingRights) {
+                    if (!_bkCastlingRights || IsSquareInCheck(7,4,ChessColor.White)) {
                         return false;
                     }
                     for (int i = 61; i < 63; i++) {
@@ -264,7 +264,7 @@ public class ChessGame {
                 }
 
                 if (move.EFile - move.SFile == -2) {
-                    if (!_bqCastlingRights) {
+                    if (!_bqCastlingRights || IsSquareInCheck(7,4,ChessColor.White)) {
                         return false;
                     }
                     for (int i = 58; i < 60; i++) {

@@ -13,5 +13,5 @@ public enum ChessPiece {
     K,
     Q,
     P,
-    Empty
+    Empty,
 }

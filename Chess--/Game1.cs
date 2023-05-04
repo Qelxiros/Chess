@@ -8,17 +8,29 @@ using Microsoft.Xna.Framework.Input;
 namespace Chess;
 
 public class Game1 : Game {
+    private static readonly ChessPiece[] WPromotionOptions =
+        { ChessPiece.Q, ChessPiece.B, ChessPiece.R, ChessPiece.N };
+
+    private static readonly ChessPiece[] BPromotionOptions =
+        { ChessPiece.q, ChessPiece.b, ChessPiece.r, ChessPiece.n };
+
     private readonly GraphicsDeviceManager _graphics;
     private sbyte _curHoveredFile;
     private sbyte _curHoveredRank;
+    private int _fiftyMoveRuleCounter; // half-moves since last capture or pawn move
     private ChessGame _game;
-    private bool _isKeyDown;
+    private Texture2D _legalMoveIndicator;
+    private List<int> _legalMovesCache;
+    private int _promotionIndex;
     private int _result; // 0 = game in progress; 1 = black victory; 2 = white victory; 3 = draw
     private float _scale;
     private sbyte _selectedFile;
     private sbyte _selectedRank;
     private SpriteBatch _spriteBatch;
     private int _squareSize;
+    private HashSet<ChessGame> _threefoldRepetitionCounterPartOne;
+    private HashSet<ChessGame> _threefoldRepetitionCounterPartTwo;
+    private bool _waitingForPromotion;
     private Texture2D b;
     private Texture2D B;
     private Texture2D black_wins;
@@ -43,18 +55,6 @@ public class Game1 : Game {
     private Texture2D r;
     private Texture2D R;
     private Texture2D white_wins;
-    private bool _waitingForPromotion;
-    private int _promotionIndex;
-    private int _fiftyMoveRuleCounter; // half-moves since last capture or pawn move
-    private HashSet<ChessGame> _threefoldRepetitionCounterPartOne;
-    private HashSet<ChessGame> _threefoldRepetitionCounterPartTwo;
-    private List<int> _legalMovesCache;
-    private Texture2D _legalMoveIndicator;
-
-    private static readonly ChessPiece[] WPromotionOptions =
-        { ChessPiece.Q, ChessPiece.B, ChessPiece.R, ChessPiece.N };
-    private static readonly ChessPiece[] BPromotionOptions =
-        { ChessPiece.q, ChessPiece.b, ChessPiece.r, ChessPiece.n };
 
     /// <summary>
     ///     Game constructor
@@ -170,8 +170,9 @@ public class Game1 : Game {
             Exit();
         }
 
-        if (!_isKeyDown && _result != 0) {
-            if (Input.GetButton(1, Input.ArcadeButtons.A2) || Input.GetButton(2, Input.ArcadeButtons.A2) || Keyboard.GetState().IsKeyDown(Keys.R)) {
+        if (_result != 0) {
+            if (Input.GetButtonDown(1, Input.ArcadeButtons.A2) || Input.GetButtonDown(2, Input.ArcadeButtons.A2) ||
+                Keyboard.GetState().IsKeyDown(Keys.R)) {
                 _result = 0;
                 _game = new ChessGame();
             }
@@ -179,32 +180,36 @@ public class Game1 : Game {
             return;
         }
 
-        if (Input.GetButton(1, Input.ArcadeButtons.A2) && Input.GetButton(2, Input.ArcadeButtons.A2) || _fiftyMoveRuleCounter >= 100) {
+        if ((Input.GetButton(1, Input.ArcadeButtons.A2) && Input.GetButton(2, Input.ArcadeButtons.A2)) ||
+            _fiftyMoveRuleCounter >= 100) {
             _result = 3;
-            _isKeyDown = true;
             return;
         }
 
-        if (!_isKeyDown && _waitingForPromotion &&
-            (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A3) || Keyboard.GetState().IsKeyDown(Keys.I))) {
+        if (_waitingForPromotion &&
+            (Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A3) ||
+             Keyboard.GetState().IsKeyDown(Keys.I))) {
             ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? WPromotionOptions : BPromotionOptions;
             _game.Game[_promotionIndex] = options[(Array.IndexOf(options, _game.Game[_promotionIndex]) + 3) % 4];
         }
-        
-        if (!_isKeyDown && _waitingForPromotion &&
-            (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A4) || Keyboard.GetState().IsKeyDown(Keys.O))) {
+
+        if (_waitingForPromotion &&
+            (Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A4) ||
+             Keyboard.GetState().IsKeyDown(Keys.O))) {
             ChessPiece[] options = _game.CurrentPlayer == ChessColor.White ? WPromotionOptions : BPromotionOptions;
             _game.Game[_promotionIndex] = options[(Array.IndexOf(options, _game.Game[_promotionIndex]) + 1) % 4];
         }
-        
-        if (!_isKeyDown && _waitingForPromotion &&
-            (Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A1) || Keyboard.GetState().IsKeyDown(Keys.P))) {
+
+        if (_waitingForPromotion &&
+            (Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A1) ||
+             Keyboard.GetState().IsKeyDown(Keys.P))) {
             _waitingForPromotion = false;
             _game.CurrentPlayer = _game.CurrentPlayer == ChessColor.White ? ChessColor.Black : ChessColor.White;
         }
 
-        if (!_isKeyDown && !_waitingForPromotion && (Keyboard.GetState().IsKeyDown(Keys.Enter) ||
-            Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.A1))) {
+        if (!_waitingForPromotion && (Keyboard.GetState().IsKeyDown(Keys.Enter) ||
+                                      Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2,
+                                          Input.ArcadeButtons.A1))) {
             if (_selectedFile == -1 || _selectedRank == -1) {
                 _selectedFile = _curHoveredFile;
                 _selectedRank = _curHoveredRank;
@@ -218,11 +223,14 @@ public class Game1 : Game {
                 ChessMove move = new(_selectedFile, _selectedRank, _curHoveredFile, _curHoveredRank);
                 if (_game.ValidateMove(move, _game.CurrentPlayer, _game.Game, false)) {
                     _legalMovesCache = new List<int>();
-                    if (_game.Game[8 * move.ERank + move.EFile] != ChessPiece.Empty || _game.Game[8*move.SRank+move.SFile] == ChessPiece.p || _game.Game[8*move.SRank+move.SFile] == ChessPiece.P) {
+                    if (_game.Game[8 * move.ERank + move.EFile] != ChessPiece.Empty ||
+                        _game.Game[8 * move.SRank + move.SFile] == ChessPiece.p ||
+                        _game.Game[8 * move.SRank + move.SFile] == ChessPiece.P) {
                         _fiftyMoveRuleCounter = 0;
                         _threefoldRepetitionCounterPartOne = new HashSet<ChessGame>();
                         _threefoldRepetitionCounterPartTwo = new HashSet<ChessGame>();
                     }
+
                     _waitingForPromotion = _game.ExecuteMove(move, false);
                     _promotionIndex = 8 * move.ERank + move.EFile;
                     _fiftyMoveRuleCounter++;
@@ -232,11 +240,13 @@ public class Game1 : Game {
                         if (_threefoldRepetitionCounterPartTwo.Contains(temp)) {
                             _result = 3;
                             return;
-                        } 
+                        }
+
                         _threefoldRepetitionCounterPartTwo.Add(temp);
                     } else {
                         _threefoldRepetitionCounterPartOne.Add(temp);
                     }
+
                     if (!_waitingForPromotion) {
                         _game.CurrentPlayer = _game.CurrentPlayer == ChessColor.Black
                             ? ChessColor.White
@@ -259,34 +269,42 @@ public class Game1 : Game {
             }
         }
 
-        if (!_isKeyDown && !_waitingForPromotion &&
-            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.A : Keys.Right) || (_game.CurrentPlayer == ChessColor.White ? Input.GetButton(1, Input.ArcadeButtons.StickLeft) || Input.GetButton(1, Input.ArcadeButtons.B1) : Input.GetButton(2, Input.ArcadeButtons.StickRight) || Input.GetButton(2, Input.ArcadeButtons.B4)))) {
+        if (!_waitingForPromotion &&
+            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.A : Keys.Right) ||
+             (_game.CurrentPlayer == ChessColor.White
+                 ? Input.GetButtonDown(1, Input.ArcadeButtons.StickLeft) ||
+                   Input.GetButtonDown(1, Input.ArcadeButtons.B1)
+                 : Input.GetButtonDown(2, Input.ArcadeButtons.StickRight) ||
+                   Input.GetButtonDown(2, Input.ArcadeButtons.B4)))) {
             _curHoveredFile = (sbyte)Math.Max(0, _curHoveredFile - 1);
         }
 
-        if (!_isKeyDown && !_waitingForPromotion &&
-            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.D : Keys.Left) || (_game.CurrentPlayer == ChessColor.White ? Input.GetButton(1, Input.ArcadeButtons.StickRight) || Input.GetButton(1, Input.ArcadeButtons.B4) : Input.GetButton(2, Input.ArcadeButtons.StickLeft) || Input.GetButton(2, Input.ArcadeButtons.B1)))) {
+        if (!_waitingForPromotion &&
+            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.D : Keys.Left) ||
+             (_game.CurrentPlayer == ChessColor.White
+                 ? Input.GetButtonDown(1, Input.ArcadeButtons.StickRight) ||
+                   Input.GetButtonDown(1, Input.ArcadeButtons.B4)
+                 : Input.GetButtonDown(2, Input.ArcadeButtons.StickLeft) ||
+                   Input.GetButtonDown(2, Input.ArcadeButtons.B1)))) {
             _curHoveredFile = (sbyte)Math.Min(7, _curHoveredFile + 1);
         }
 
-        if (!_isKeyDown && !_waitingForPromotion && (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.W : Keys.Up) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickUp) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B3))) {
+        if (!_waitingForPromotion &&
+            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.W : Keys.Up) ||
+             Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickUp) ||
+             Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B3))) {
             _curHoveredRank = _game.CurrentPlayer == ChessColor.White
                 ? (sbyte)Math.Min(7, _curHoveredRank + 1)
                 : (sbyte)Math.Max(0, _curHoveredRank - 1);
         }
 
-        if (!_isKeyDown && !_waitingForPromotion &&
-            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.S : Keys.Down) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickDown) || Input.GetButton(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B2))) {
+        if (!_waitingForPromotion &&
+            (Keyboard.GetState().IsKeyDown(_game.CurrentPlayer == ChessColor.White ? Keys.S : Keys.Down) ||
+             Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.StickDown) ||
+             Input.GetButtonDown(_game.CurrentPlayer == ChessColor.White ? 1 : 2, Input.ArcadeButtons.B2))) {
             _curHoveredRank = _game.CurrentPlayer == ChessColor.White
                 ? (sbyte)Math.Max(0, _curHoveredRank - 1)
                 : (sbyte)Math.Min(7, _curHoveredRank + 1);
-        }
-
-        // im so sorry
-        if (Keyboard.GetState().GetPressedKeys().Length == 0 && !Input.GetButton(1, Input.ArcadeButtons.A1) && !Input.GetButton(1, Input.ArcadeButtons.A2) && !Input.GetButton(1, Input.ArcadeButtons.A3) && !Input.GetButton(1, Input.ArcadeButtons.A4) && !Input.GetButton(1, Input.ArcadeButtons.B1) && !Input.GetButton(1, Input.ArcadeButtons.B2) && !Input.GetButton(1, Input.ArcadeButtons.B3) && !Input.GetButton(1, Input.ArcadeButtons.B4) && !Input.GetButton(1, Input.ArcadeButtons.StickUp) && !Input.GetButton(1, Input.ArcadeButtons.StickDown) && !Input.GetButton(1, Input.ArcadeButtons.StickLeft) && !Input.GetButton(1, Input.ArcadeButtons.StickRight)&& !Input.GetButton(2, Input.ArcadeButtons.A1) && !Input.GetButton(2, Input.ArcadeButtons.A2) && !Input.GetButton(2, Input.ArcadeButtons.A3) && !Input.GetButton(2, Input.ArcadeButtons.A4) && !Input.GetButton(2, Input.ArcadeButtons.B1) && !Input.GetButton(2, Input.ArcadeButtons.B2) && !Input.GetButton(2, Input.ArcadeButtons.B3) && !Input.GetButton(2, Input.ArcadeButtons.B4) && !Input.GetButton(2, Input.ArcadeButtons.StickUp) && !Input.GetButton(2, Input.ArcadeButtons.StickDown) && !Input.GetButton(2, Input.ArcadeButtons.StickLeft) && !Input.GetButton(2, Input.ArcadeButtons.StickRight)) {
-            _isKeyDown = false;
-        } else {
-            _isKeyDown = true;
         }
 
         base.Update(gameTime);
@@ -308,23 +326,31 @@ public class Game1 : Game {
         Vector2 selPos;
         Vector2 selOppPos;
         if (_game.CurrentPlayer == ChessColor.Black) {
-            position = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - index % 8 * _squareSize, index / 8 * _squareSize);
-            oppPos = new Vector2(index % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize);
-            selPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - selIndex % 8 * _squareSize, selIndex / 8 * _squareSize);
-            selOppPos = new Vector2(selIndex % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize);
+            position = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - index % 8 * _squareSize,
+                index / 8 * _squareSize);
+            oppPos = new Vector2(index % 8 * _squareSize,
+                _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize);
+            selPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - selIndex % 8 * _squareSize,
+                selIndex / 8 * _squareSize);
+            selOppPos = new Vector2(selIndex % 8 * _squareSize,
+                _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize);
         } else {
-            position = new Vector2(index % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize);
-            oppPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - index % 8 * _squareSize, index / 8 * _squareSize);
-            selPos = new Vector2(selIndex % 8 * _squareSize, _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize);
-            selOppPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - selIndex % 8 * _squareSize, selIndex / 8 * _squareSize);
+            position = new Vector2(index % 8 * _squareSize,
+                _graphics.PreferredBackBufferHeight - _squareSize - index / 8 * _squareSize);
+            oppPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - index % 8 * _squareSize,
+                index / 8 * _squareSize);
+            selPos = new Vector2(selIndex % 8 * _squareSize,
+                _graphics.PreferredBackBufferHeight - _squareSize - selIndex / 8 * _squareSize);
+            selOppPos = new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - selIndex % 8 * _squareSize,
+                selIndex / 8 * _squareSize);
         }
-        
+
         _spriteBatch.Draw(hovered_square, position, null,
             Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
         _spriteBatch.Draw((index / 8 + index % 8) % 2 == 1 ? light_square : dark_square,
             oppPos, null, Color.White,
             0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-        
+
         _spriteBatch.Draw(hovered_square, selPos, null,
             Color.Gray, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
         _spriteBatch.Draw((selIndex / 8 + selIndex % 8) % 2 == 1 ? light_square : dark_square,
@@ -334,7 +360,9 @@ public class Game1 : Game {
         for (int i = 0; i < 64; i++) {
             if (i != index && i != selIndex) {
                 if ((i / 8 + i % 8) % 2 == 1) {
-                    _spriteBatch.Draw(light_square, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null,
+                    _spriteBatch.Draw(light_square,
+                        new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize,
+                            i / 8 * _squareSize), null,
                         Color.White, 0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                     _spriteBatch.Draw(light_square,
                         new Vector2(i % 8 * _squareSize,
@@ -342,7 +370,9 @@ public class Game1 : Game {
                         0,
                         new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                 } else {
-                    _spriteBatch.Draw(dark_square, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null,
+                    _spriteBatch.Draw(dark_square,
+                        new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize,
+                            i / 8 * _squareSize), null,
                         Color.White,
                         0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                     _spriteBatch.Draw(dark_square,
@@ -353,49 +383,26 @@ public class Game1 : Game {
                 }
             }
 
-
-            Texture2D piece = null;
-            switch (_game.Game[i]) {
-                case ChessPiece.b:
-                    piece = b;
-                    break;
-                case ChessPiece.B:
-                    piece = B;
-                    break;
-                case ChessPiece.k:
-                    piece = k;
-                    break;
-                case ChessPiece.K:
-                    piece = K;
-                    break;
-                case ChessPiece.n:
-                    piece = n;
-                    break;
-                case ChessPiece.N:
-                    piece = N;
-                    break;
-                case ChessPiece.q:
-                    piece = q;
-                    break;
-                case ChessPiece.Q:
-                    piece = Q;
-                    break;
-                case ChessPiece.r:
-                    piece = r;
-                    break;
-                case ChessPiece.R:
-                    piece = R;
-                    break;
-                case ChessPiece.p:
-                    piece = p0;
-                    break;
-                case ChessPiece.P:
-                    piece = P0;
-                    break;
-            }
+            Texture2D piece = _game.Game[i] switch {
+                ChessPiece.b => b,
+                ChessPiece.B => B,
+                ChessPiece.k => k,
+                ChessPiece.K => K,
+                ChessPiece.n => n,
+                ChessPiece.N => N,
+                ChessPiece.q => q,
+                ChessPiece.Q => Q,
+                ChessPiece.r => r,
+                ChessPiece.R => R,
+                ChessPiece.p => p0,
+                ChessPiece.P => P0,
+                _ => null,
+            };
 
             if (piece != null) {
-                _spriteBatch.Draw(piece, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
+                _spriteBatch.Draw(piece,
+                    new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize,
+                        i / 8 * _squareSize), null, Color.White, 0,
                     new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
                 _spriteBatch.Draw(piece,
                     new Vector2(i % 8 * _squareSize,
@@ -407,36 +414,38 @@ public class Game1 : Game {
         _spriteBatch.Draw(info, new Vector2(0, 8 * _squareSize), null, Color.White, 0, new Vector2(0, 0), _scale,
             SpriteEffects.None, 0f);
         switch (_result) {
-            case 0:
-                _spriteBatch.Draw(glhf, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White, 0,
-                    new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                break;
-            case 1:
-                _spriteBatch.Draw(black_wins, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White,
-                    0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                break;
-            case 2:
-                _spriteBatch.Draw(white_wins, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White,
-                    0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                break;
-            case 3:
-                _spriteBatch.Draw(draw, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White, 0,
-                    new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                break;
+        case 0:
+            _spriteBatch.Draw(glhf, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White, 0,
+                new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            break;
+        case 1:
+            _spriteBatch.Draw(black_wins, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White,
+                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            break;
+        case 2:
+            _spriteBatch.Draw(white_wins, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White,
+                0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            break;
+        case 3:
+            _spriteBatch.Draw(draw, new Vector2(_squareSize * 330f / 135, 8 * _squareSize), null, Color.White, 0,
+                new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+            break;
         }
 
         foreach (int i in _legalMovesCache) {
             switch (_game.CurrentPlayer) {
-                case ChessColor.Black:
-                    _spriteBatch.Draw(_legalMoveIndicator, new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize, i / 8 * _squareSize), null, Color.White, 0,
-                        new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    break;
-                case ChessColor.White:
-                    _spriteBatch.Draw(_legalMoveIndicator,
+            case ChessColor.Black:
+                _spriteBatch.Draw(_legalMoveIndicator,
+                    new Vector2(_graphics.PreferredBackBufferWidth - _squareSize - i % 8 * _squareSize,
+                        i / 8 * _squareSize), null, Color.White, 0,
+                    new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
+                break;
+            case ChessColor.White:
+                _spriteBatch.Draw(_legalMoveIndicator,
                     new Vector2(i % 8 * _squareSize,
                         _graphics.PreferredBackBufferHeight - _squareSize - i / 8 * _squareSize), null, Color.White,
                     0, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);
-                    break;
+                break;
             }
         }
 

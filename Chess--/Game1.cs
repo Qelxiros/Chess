@@ -205,6 +205,10 @@ public class Game1 : Game {
              Keyboard.GetState().IsKeyDown(Keys.P))) {
             _waitingForPromotion = false;
             _game.CurrentPlayer = _game.CurrentPlayer == ChessColor.White ? ChessColor.Black : ChessColor.White;
+            if (!_game.PlayerHasLegalMove(_game.CurrentPlayer)) {
+                _result = _game.CurrentPlayer == ChessColor.White ? 1 : 2;
+                return;
+            }
         }
 
         if (!_waitingForPromotion && (Keyboard.GetState().IsKeyDown(Keys.Enter) ||

@@ -375,7 +375,7 @@ public class ChessGame {
                 return false;
             }
 
-            if (move.ERank - move.SRank == -2 && game[8 * (move.ERank - 1) + move.EFile] != ChessPiece.Empty) {
+            if (move.ERank - move.SRank == -2 && game[8 * (move.ERank + 1) + move.EFile] != ChessPiece.Empty) {
                 return false;
             }
 
